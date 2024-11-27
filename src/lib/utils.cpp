@@ -415,12 +415,14 @@ namespace GameStatus
 {
 bool isGameRunning()
 {
-    return VarUtils::main->quitGame;
+    return !VarUtils::main->quitGame;
 }
 } // namespace GameStatus
 
 namespace PlayerStatus
 {
+bool dodge = false;
+
 bool IsAttacking()
 {
     bool res;
@@ -453,6 +455,11 @@ bool IsSneaking()
 {
     return VarUtils::player->IsSneaking();
 }
+
+bool IsDodging()
+{
+    return dodge;
+}
 bool IsJumping()
 {
     bool res;
@@ -482,6 +489,8 @@ Animation NormalAttackDual;
 Animation PowerAttackRight;
 Animation PowerAttackLeft;
 Animation PowerAttackDual;
+
+Animation BlockStart;
 
 Animation NormalAttackSprint;
 Animation PowerAttackSprint1H;
@@ -518,6 +527,11 @@ void init()
     PowerAttackDual.idle = (RE::TESIdleForm *)RE::TESForm::LookupByID(0x2E901);
     PowerAttackDual.action = (RE::BGSAction *)RE::TESForm::LookupByID(0x2E2F7);
     PowerAttackDual.event = "";
+
+    BlockStart.type = ActionType::Idle;
+    BlockStart.idle = (RE::TESIdleForm *)RE::TESForm::LookupByID(0x13217);
+    BlockStart.action = nullptr;
+    BlockStart.event = "";
 
     NormalAttackSprint.type = ActionType::AniamtionEvent;
     NormalAttackSprint.idle = nullptr;

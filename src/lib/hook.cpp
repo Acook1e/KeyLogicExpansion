@@ -12,8 +12,8 @@ static ActionQueue queue;
 static uint8_t isInQueue = 0;
 static uint64_t startTime = 0;
 
-static uint32_t preInputTime = 150;
-static uint32_t intervalTime = 30;
+static uint32_t preInputTime = 0;
+static uint32_t intervalTime = 0;
 
 static bool vanillaRMB = false;
 
@@ -21,6 +21,7 @@ typedef bool _doAction_t(RE::TESActionData *);
 REL::Relocation<_doAction_t> doAction{RELOCATION_ID(40551, 41557)};
 void doAnimation(ActionList::Animation action)
 {
+    startTime = TimeUtils::GetTime();
     switch (action.type)
     {
     case ActionList::ActionType::Idle:
@@ -214,12 +215,11 @@ void ActionPreInput(std::function<void()> func)
 }
 void NormalAttack(AttackType type)
 {
-    if (PlayerStatus::IsSprinting() && !PlayerStatus::IsAttacking())
+    if (Config::enableSprintAttack && PlayerStatus::IsSprinting() && !PlayerStatus::IsAttacking())
     {
         if ((TimeUtils::GetTime() - startTime) / 1000.0 < intervalTime)
             return;
         doAnimation(ActionList::NormalAttackSprint);
-        startTime = TimeUtils::GetTime();
         return;
     }
     ActionList::Animation target;
@@ -239,11 +239,15 @@ void NormalAttack(AttackType type)
     {
         if (PlayerStatus::IsSwiming())
         {
+            if ((TimeUtils::GetTime() - startTime) / 1000.0 < intervalTime)
+                return;
             VarUtils::player->NotifyAnimationGraph("BfcoSwimStopFast");
             doAnimation(Compatibility::BFCO_NormalAttackSwim);
         }
         if (PlayerStatus::IsJumping() && !PlayerStatus::IsAttacking())
         {
+            if ((TimeUtils::GetTime() - startTime) / 1000.0 < intervalTime)
+                return;
             VarUtils::player->NotifyAnimationGraph("BfcoJumpStop");
             doAnimation(Compatibility::BFCO_NormalAttackJump);
             return;
@@ -289,7 +293,6 @@ void NormalAttack(AttackType type)
             if (isInQueue && (TimeUtils::GetTime() - startTime) / 1000.0 < intervalTime)
                 return;
             doAnimation(target);
-            startTime = TimeUtils::GetTime();
         }
     }
     else
@@ -297,7 +300,7 @@ void NormalAttack(AttackType type)
 }
 void PowerAttack(AttackType type)
 {
-    if (PlayerStatus::IsSprinting() && !PlayerStatus::IsAttacking())
+    if (Config::enableSprintAttack && PlayerStatus::IsSprinting() && !PlayerStatus::IsAttacking())
     {
         if ((TimeUtils::GetTime() - startTime) / 1000.0 < intervalTime)
             return;
@@ -305,7 +308,6 @@ void PowerAttack(AttackType type)
             doAnimation(ActionList::PowerAttackSprint2H);
         else
             doAnimation(ActionList::PowerAttackSprint1H);
-        startTime = TimeUtils::GetTime();
         return;
     }
     ActionList::Animation target;
@@ -325,11 +327,15 @@ void PowerAttack(AttackType type)
     {
         if (PlayerStatus::IsSwiming())
         {
+            if ((TimeUtils::GetTime() - startTime) / 1000.0 < intervalTime)
+                return;
             VarUtils::player->NotifyAnimationGraph("BfcoSwimStopFast");
             doAnimation(Compatibility::BFCO_PowerAttackSwim);
         }
         if (PlayerStatus::IsJumping() && !PlayerStatus::IsAttacking())
         {
+            if ((TimeUtils::GetTime() - startTime) / 1000.0 < intervalTime)
+                return;
             VarUtils::player->NotifyAnimationGraph("BfcoJumpStop");
             if (Style::currentStyle == Style::Styles::TwoHand)
                 doAnimation(Compatibility::BFCO_PowerAttackJump2H);
@@ -378,7 +384,15 @@ void PowerAttack(AttackType type)
             if (isInQueue && (TimeUtils::GetTime() - startTime) / 1000.0 < intervalTime)
                 return;
             doAnimation(target);
-            startTime = TimeUtils::GetTime();
+            if (Compatibility::BFCO)
+            {
+                std::thread([]() {
+                    while (KeyUtils::GetKeyState(Config::powerAttack))
+                        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                    SKSE::GetTaskInterface()->AddTask(
+                        []() { VarUtils::player->NotifyAnimationGraph("BFCOAttackstart_1"); });
+                }).detach();
+            }
         }
     }
     else
@@ -386,14 +400,19 @@ void PowerAttack(AttackType type)
 }
 void Block()
 {
-    if (!PlayerStatus::IsBlocking() && !PlayerStatus::IsBashing() && PlayerStatus::IsSheathe())
+    while (PlayerStatus::IsSheathe() && !PlayerStatus::IsDodging() && !PlayerStatus::IsBlocking() &&
+           KeyUtils::GetKeyState(Config::block))
+    {
         SKSE::GetTaskInterface()->AddTask([]() {
-            if (VarUtils::player->NotifyAnimationGraph("blockStart"))
+            if (VarUtils::player->GetActorRuntimeData().currentProcess->PlayIdle(VarUtils::player,
+                                                                                 ActionList::BlockStart.idle, nullptr))
             {
                 vanillaRMB = false;
                 VarUtils::player->AsActorState()->actorState2.wantBlocking = true;
             }
         });
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
 }
 void SheatheAttack()
 {
@@ -405,6 +424,8 @@ void Recover()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         Style::currentStyle = DetectStyle();
+        preInputTime = Style::styleMap[Style::currentStyle].preInputTime;
+        intervalTime = Style::styleMap[Style::currentStyle].intervalTime;
         if (Style::styleMap[Style::currentStyle].isUsingHold)
             Style::styleMap[Style::currentStyle].isAltTypeEnable =
                 KeyUtils::GetKeyState(Style::styleMap[Style::currentStyle].attackTypeModifier);
@@ -438,20 +459,29 @@ RE::BSEventNotifyControl AnimationGraphEventSink::ProcessEvent(
 {
     if (!a_event || !a_eventSource)
         return RE::BSEventNotifyControl::kContinue;
-
-    if (a_event->tag == "MCO_WinOpen" || a_event->tag == "BFCO_NextWinStart")
-        Compatibility::normalAttackWin = true;
-    else if (a_event->tag == "MCO_PowerWinOpen" || a_event->tag == "BFCO_NextPowerWinStart")
-        Compatibility::powerAttackWin = true;
-    else if (a_event->tag == "MCO_WinClose")
-        Compatibility::normalAttackWin = false;
-    else if (a_event->tag == "MCO_PowerWinClose")
-        Compatibility::powerAttackWin = false;
-    else if (a_event->tag == "BFCO_DIY_EndLoop")
+    // BFCO & MCO
+    if (Compatibility::BFCO || Compatibility::MCO)
     {
-        Compatibility::normalAttackWin = false;
-        Compatibility::powerAttackWin = false;
+        if (a_event->tag == "MCO_WinOpen" || a_event->tag == "BFCO_NextWinStart")
+            Compatibility::normalAttackWin = true;
+        else if (a_event->tag == "MCO_PowerWinOpen" || a_event->tag == "BFCO_NextPowerWinStart")
+            Compatibility::powerAttackWin = true;
+        else if (a_event->tag == "MCO_WinClose")
+            Compatibility::normalAttackWin = false;
+        else if (a_event->tag == "MCO_PowerWinClose")
+            Compatibility::powerAttackWin = false;
+        else if (a_event->tag == "BFCO_DIY_EndLoop")
+        {
+            Compatibility::normalAttackWin = false;
+            Compatibility::powerAttackWin = false;
+        }
     }
+    // TK Dodge
+    if (a_event->tag == "TKDodgeForward" || a_event->tag == "TKDodgeBack" || a_event->tag == "TKDodgeLeft" ||
+        a_event->tag == "TKDodgeRight" || a_event->tag == "TKDR_DodgeStart")
+        PlayerStatus::dodge = true;
+    else if (a_event->tag == "TKDodgeStop" || a_event->tag == "TKDR_DodgeEnd")
+        PlayerStatus::dodge = false;
 
     return RE::BSEventNotifyControl::kContinue;
 }
@@ -703,8 +733,8 @@ bool AttackBlockHandler::ProcessButton(ButtonEvent *a_event, PlayerControlsData 
             else
                 return true;
         }
-        if (code == Config::block)
-            Block();
+        if (code == Config::block && a_event->IsDown())
+            std::thread(Block).detach();
         // BFCO ComboAttack
         if (Compatibility::BFCO && code == Config::BFCO_ComboAttack && PlayerStatus::IsAttacking())
         {
@@ -1025,6 +1055,11 @@ bool ReadyWeaponHandler::CP(InputEvent *a_event)
 }
 bool ReadyWeaponHandler::ProcessButton(ButtonEvent *a_event, PlayerControlsData *a_data)
 {
+    if (Compatibility::BFCO && PlayerStatus::IsSwiming() && !PlayerStatus::IsSheathe())
+    {
+        doAnimation(Compatibility::BFCO_SwimSheathe);
+        return true;
+    }
     a_event->userEvent = VarUtils::userEvent->readyWeapon;
     if (PlayerStatus::IsAttacking() && Style::currentStyle != Style::Styles::Bow)
         return false;

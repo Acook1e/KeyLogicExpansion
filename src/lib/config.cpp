@@ -10,6 +10,7 @@ bool &enableCustomInput = std::ref(Custom::enableCustomInput);
 bool &enableStances = std::ref(Stances::enableStances);
 bool enableHoldSprint;
 bool enableHoldSneak;
+bool enableSprintAttack;
 uint32_t enableSheatheAttack;
 bool enableReverseHorseAttack;
 
@@ -65,6 +66,7 @@ void setVar()
     enableStances = ini.GetBoolValue("Features", NameToStr(enableStances));
     enableHoldSprint = ini.GetBoolValue("Features", NameToStr(enableHoldSprint));
     enableHoldSneak = ini.GetBoolValue("Features", NameToStr(enableHoldSneak));
+    enableSprintAttack = ini.GetBoolValue("Features", NameToStr(enableSprintAttack));
     enableReverseHorseAttack = ini.GetBoolValue("Features", NameToStr(enableReverseHorseAttack));
     enableSheatheAttack = ini.GetLongValue("Features", NameToStr(enableSheatheAttack));
 
@@ -106,6 +108,9 @@ void setVar()
         Style::styleMap.insert(std::make_pair(
             (Style::Styles)i,
             Style::CombatStyle{
+                // PreInput
+                (uint32_t)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "PreInputTime"),
+                (uint32_t)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "IntervalTime"),
                 // Normal
                 (Style::AttackType)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "NormalAttackType"),
                 ini.GetBoolValue(Style::GetStyleName((Style::Styles)i), "RepeatNormalAttack"),
@@ -165,6 +170,7 @@ void createInI()
     ini.SetBoolValue("Features", NameToStr(enableStances), false);
     ini.SetBoolValue("Features", NameToStr(enableHoldSprint), true);
     ini.SetBoolValue("Features", NameToStr(enableHoldSneak), false);
+    ini.SetBoolValue("Features", NameToStr(enableSprintAttack), true);
     ini.SetBoolValue("Features", NameToStr(enableReverseHorseAttack), false);
     ini.SetLongValue("Features", NameToStr(enableSheatheAttack), 0);
 
@@ -203,6 +209,9 @@ void createInI()
     // Combat Style
     for (int i = Style::Styles::Unknown; i <= Style::Styles::StaffMagic; i++)
     {
+        // PreInput
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "PreInputTime", 100);
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "IntervalTime", 30);
         // Normal
         ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "NormalAttackType", Style::AttackType::RightHand);
         ini.SetBoolValue(Style::GetStyleName((Style::Styles)i), "RepeatNormalAttack", true);
@@ -322,6 +331,7 @@ void saveInI()
     ini.SetBoolValue("Features", NameToStr(enableStances), enableStances);
     ini.SetBoolValue("Features", NameToStr(enableHoldSprint), enableHoldSprint);
     ini.SetBoolValue("Features", NameToStr(enableHoldSneak), enableHoldSneak);
+    ini.SetBoolValue("Features", NameToStr(enableSprintAttack), enableSprintAttack);
     ini.SetBoolValue("Features", NameToStr(enableReverseHorseAttack), enableReverseHorseAttack);
     ini.SetLongValue("Features", NameToStr(enableSheatheAttack), enableSheatheAttack);
 
@@ -355,6 +365,11 @@ void saveInI()
     // Combat Style
     for (int i = Style::Styles::Unknown; i <= Style::Styles::StaffMagic; i++)
     {
+        // PreInput
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "PreInputTime",
+                         Style::styleMap[(Style::Styles)i].preInputTime);
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "IntervalTime",
+                         Style::styleMap[(Style::Styles)i].intervalTime);
         // Normal
         ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "NormalAttackType",
                          Style::styleMap[(Style::Styles)i].normalAttackType);

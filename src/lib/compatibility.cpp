@@ -3,11 +3,13 @@
 namespace Compatibility
 {
 bool BFCO = false;
+bool BFCO_PowerCharge = false;
 ActionList::Animation BFCO_NormalAttackSpecial;
 ActionList::Animation BFCO_PowerAttackSpecial;
 ActionList::Animation BFCO_NormalAttackJump;
 ActionList::Animation BFCO_PowerAttackJump1H;
 ActionList::Animation BFCO_PowerAttackJump2H;
+ActionList::Animation BFCO_SwimSheathe;
 ActionList::Animation BFCO_NormalAttackSwim;
 ActionList::Animation BFCO_PowerAttackSwim;
 ActionList::Animation BFCO_ComboAttack;
@@ -76,10 +78,9 @@ void init()
         BFCO_PowerAttackSpecial.event = "attackPowerStartDualWield";
 
         BFCO_NormalAttackJump.type = ActionList::ActionType::Idle;
-        BFCO_NormalAttackJump.idle = (RE::TESIdleForm *)RE::TESForm::LookupByID(0xF0A3E);
+        BFCO_NormalAttackJump.idle = (RE::TESIdleForm *)FormUtils::GetForm("SCSI-ACTbfco-Main.esp|0x008E1");
         BFCO_NormalAttackJump.action = nullptr;
         BFCO_NormalAttackJump.event = "attackStartSprint";
-        BFCO_NormalAttackJump.idle->conditions.head->data.flags.isOR = 1;
 
         BFCO_PowerAttackJump1H.type = ActionList::ActionType::Idle;
         BFCO_PowerAttackJump1H.idle = (RE::TESIdleForm *)FormUtils::GetForm("SCSI-ACTbfco-Main.esp|0x008DE");
@@ -90,6 +91,11 @@ void init()
         BFCO_PowerAttackJump2H.idle = (RE::TESIdleForm *)FormUtils::GetForm("SCSI-ACTbfco-Main.esp|0x008DF");
         BFCO_PowerAttackJump2H.action = nullptr;
         BFCO_PowerAttackJump2H.event = "attackPowerStart_2HMSprint";
+
+        BFCO_SwimSheathe.type = ActionList::ActionType::Idle;
+        BFCO_SwimSheathe.idle = (RE::TESIdleForm *)FormUtils::GetForm("SCSI-ACTbfco-Main.esp|0x0091B");
+        BFCO_SwimSheathe.action = nullptr;
+        BFCO_SwimSheathe.event = "";
 
         BFCO_NormalAttackSwim.type = ActionList::ActionType::Idle;
         BFCO_NormalAttackSwim.idle = (RE::TESIdleForm *)FormUtils::GetForm("SCSI-ACTbfco-Main.esp|0x00916");

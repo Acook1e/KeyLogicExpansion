@@ -44,6 +44,9 @@ enum Styles : std::uint8_t
 };
 typedef struct
 {
+    // PreInput
+    uint32_t preInputTime;
+    uint32_t intervalTime;
     // Normal
     AttackType normalAttackType;
     bool repeatNormalAttack;

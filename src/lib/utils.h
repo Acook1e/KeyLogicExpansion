@@ -205,6 +205,8 @@ bool isGameRunning();
 
 namespace PlayerStatus
 {
+extern bool dodge;
+
 bool IsAttacking();
 bool IsBlocking();
 bool IsSheathe();
@@ -213,6 +215,7 @@ bool IsMoving();
 bool IsSprinting();
 bool IsSneaking();
 bool IsJumping();
+bool IsDodging();
 bool IsRiding();
 bool IsSwiming();
 bool IsInKillmove();
@@ -241,6 +244,8 @@ extern Animation NormalAttackDual;
 extern Animation PowerAttackRight;
 extern Animation PowerAttackLeft;
 extern Animation PowerAttackDual;
+
+extern Animation BlockStart;
 
 extern Animation NormalAttackSprint;
 extern Animation PowerAttackSprint1H;

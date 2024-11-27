@@ -191,6 +191,19 @@ void SelectAttackType(const char *name, Style::AttackType &type, const char *des
     if (description && ImGui::IsItemHovered())
         ImGui::SetTooltip(description);
 }
+void IntText(const char *name, uint32_t &value, const char *description = nullptr, uint32_t min = 0U,
+             uint32_t max = (1U << 31) - 1, int step = 1, int step_fast = 10)
+{
+    if (ImGui::InputInt(name, (int *)&value, step, step_fast))
+    {
+        if (value <= min)
+            value = min;
+        else if (value >= max)
+            value = max;
+    }
+    if (description && ImGui::IsItemHovered())
+        ImGui::SetTooltip(description);
+}
 
 typedef struct
 {
@@ -269,6 +282,7 @@ void KeyBindSettings()
         SwitchButton("EnableHoldSprint", Config::enableHoldSprint, "Change enable sprint when you hold sprint key");
         SwitchButton("EnableHoldSneak", Config::enableHoldSneak,
                      "Same as EnableHoldSprint, Change enable sneak when you hold sneak key");
+        SwitchButton("EnableSprintAttack", Config::enableSprintAttack, "Whether use sprint attack, include power");
         SwitchButton("EnableReverseHorseAttack", Config::enableReverseHorseAttack,
                      "Reverse your HorseAttack diretion, if enable this, left key attack left, right key attack right");
         SelectButton(
@@ -304,6 +318,14 @@ void KeyBindSettings()
 
     if (ImGui::TreeNode("Style"))
     {
+        IntText("PreInput Time", Style::styleMap[Style::currentStyle].preInputTime,
+                "How long a PreInput exist, recommended 100 - 200", 20, 1000, 10, 100);
+        IntText(
+            "Interval Time", Style::styleMap[Style::currentStyle].intervalTime,
+            "How long between 2 attacks, recommended 20 - 50, too small will attack out of exception, too long won't "
+            "attack",
+            10, 200, 5, 10);
+        ImGui::Spacing();
         ImGui::Text("Current Style: %s", Style::GetStyleName(Style::currentStyle));
         SelectAttackType("NormalAttackType", Style::styleMap[Style::currentStyle].normalAttackType,
                          "For BFCO/MCO, Right means Dual, you can try any types, maybe crash or maybe funny");

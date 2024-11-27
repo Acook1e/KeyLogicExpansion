@@ -10,6 +10,7 @@ namespace Config
 // Features
 extern bool enableHoldSprint;
 extern bool enableHoldSneak;
+extern bool enableSprintAttack;
 extern uint32_t enableSheatheAttack;
 extern bool enableReverseHorseAttack;
 

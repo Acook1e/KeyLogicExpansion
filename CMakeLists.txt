@@ -17,9 +17,9 @@ include(GNUInstallDirs)
 # AE Vanilla
 # set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/Steam/mods/KeyLogicOverhaul")
 # MCO
-# set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/XL/mods/KLE")
+set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/Requiem/mods/KeyLogicOverhaul")
 # BFCO
-set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/JueLunV5/mods/KLE")
+# set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/BFCO/mods/KeyLogicOverhaul")
 
 file(GLOB_RECURSE headers 
     "src/lib/*.h"
