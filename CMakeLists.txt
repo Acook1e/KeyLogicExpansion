@@ -14,12 +14,10 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 include(GNUInstallDirs)
 
 # change this to your output mod folder
-# AE Vanilla
-# set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/Steam/mods/KeyLogicOverhaul")
 # MCO
-set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/Requiem/mods/KeyLogicOverhaul")
+# set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/50/mods/KeyLogicExpansion")
 # BFCO
-# set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/BFCO/mods/KeyLogicOverhaul")
+set(PLUGIN_OUTPUT "C:/Users/ACFOV/Documents/MO2/Skyrim/XL/mods/KeyLogicExpansion")
 
 file(GLOB_RECURSE headers 
     "src/lib/*.h"

@@ -229,12 +229,17 @@ enum ActionType
     Action,
     AniamtionEvent
 };
-typedef struct
+typedef struct Struct_Animation
 {
     ActionType type;
     RE::TESIdleForm *idle;
     RE::BGSAction *action;
     std::string event;
+
+    bool operator==(Struct_Animation cmp) const
+    {
+        return action == cmp.action && event == cmp.event && idle == cmp.idle && type == cmp.type;
+    }
 } Animation;
 
 extern Animation NormalAttackRight;

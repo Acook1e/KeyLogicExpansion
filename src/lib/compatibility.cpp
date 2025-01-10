@@ -9,6 +9,8 @@ ActionList::Animation BFCO_PowerAttackSpecial;
 ActionList::Animation BFCO_NormalAttackJump;
 ActionList::Animation BFCO_PowerAttackJump1H;
 ActionList::Animation BFCO_PowerAttackJump2H;
+ActionList::Animation BFCO_BowAttackJump;
+ActionList::Animation BFCO_BowPowerAttackJump;
 ActionList::Animation BFCO_SwimSheathe;
 ActionList::Animation BFCO_NormalAttackSwim;
 ActionList::Animation BFCO_PowerAttackSwim;
@@ -19,6 +21,8 @@ bool MCO = false;
 bool ELDEN = false;
 bool CanUseWarAsh = false;
 std::vector<RE::TESForm *> warAshList;
+
+bool GRIP;
 
 bool normalAttackWin = false;
 bool powerAttackWin = false;
@@ -92,6 +96,16 @@ void init()
         BFCO_PowerAttackJump2H.action = nullptr;
         BFCO_PowerAttackJump2H.event = "attackPowerStart_2HMSprint";
 
+        BFCO_BowAttackJump.type = ActionList::ActionType::Idle;
+        BFCO_BowAttackJump.idle = (RE::TESIdleForm *)FormUtils::GetForm("SCSI-ACTbfco-Main.esp|0x008E2");
+        BFCO_BowAttackJump.action = nullptr;
+        BFCO_BowAttackJump.event = "attackPowerStart_Sprint";
+
+        BFCO_BowPowerAttackJump.type = ActionList::ActionType::Idle;
+        BFCO_BowPowerAttackJump.idle = (RE::TESIdleForm *)FormUtils::GetForm("SCSI-ACTbfco-Main.esp|0x008E0");
+        BFCO_BowPowerAttackJump.action = nullptr;
+        BFCO_BowPowerAttackJump.event = "attackPowerStart_Sprint";
+
         BFCO_SwimSheathe.type = ActionList::ActionType::Idle;
         BFCO_SwimSheathe.idle = (RE::TESIdleForm *)FormUtils::GetForm("SCSI-ACTbfco-Main.esp|0x0091B");
         BFCO_SwimSheathe.action = nullptr;
@@ -124,7 +138,7 @@ void init()
     ELDEN = ModSupport::ModExist("EldenSkyrim_RimSkills.esp");
     if (ELDEN)
     {
-        logger::trace("Detecting EldenSkyrim installed, can enable WarAsh Now.");
+        logger::trace("Detecting Elden Skyrim installed, can enable WarAsh Now.");
         CanUseWarAsh = true;
         // Ash of War - Strength
         warAshList.push_back(FormUtils::GetForm("EldenSkyrim_RimSkills.esp|0x01023"));
@@ -136,6 +150,13 @@ void init()
         warAshList.push_back(FormUtils::GetForm("EldenSkyrim_RimSkills.esp|0x01027"));
         // Ash of War - Fortune
         warAshList.push_back(FormUtils::GetForm("EldenSkyrim_RimSkills.esp|0x01028"));
+    }
+
+    // Dynamic Grip: dynamicGrip.dll
+    GRIP = ModSupport::DLLExist("dynamicGrip.dll");
+    if (GRIP)
+    {
+        logger::trace("Detecting Dynamic Grip installed, can use Grip Style Now.");
     }
 }
 } // namespace Compatibility

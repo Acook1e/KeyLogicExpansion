@@ -5,6 +5,9 @@ namespace Config
 CSimpleIniA ini;
 const static std::string ini_path = "Data/SKSE/Plugins/KeyLogicExpansion.ini";
 
+// Language
+std::string locale;
+
 // Features
 bool &enableCustomInput = std::ref(Custom::enableCustomInput);
 bool &enableStances = std::ref(Stances::enableStances);
@@ -234,7 +237,6 @@ void createInI()
         switch ((Style::Styles)i)
         {
         case Style::Styles::TwoHand:
-        case Style::Styles::Bow:
         case Style::Styles::DualSword:
         case Style::Styles::DualFist:
         case Style::Styles::ShieldSword:
@@ -250,6 +252,7 @@ void createInI()
             ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "OtherAttackType", Style::AttackType::VanillaLMB);
             break;
         case Style::Styles::Unknown:
+        case Style::Styles::Bow:
         case Style::Styles::DualMagic:
         case Style::Styles::DualStaff:
         case Style::Styles::ShieldMagic:

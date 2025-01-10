@@ -7,6 +7,9 @@ namespace Config
 
 #define NameToStr(n) str(std::string(#n))
 
+// Language
+extern std::string locale;
+
 // Features
 extern bool enableHoldSprint;
 extern bool enableHoldSneak;
