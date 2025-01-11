@@ -10,6 +10,7 @@
     "commonlibsse-ng-flatrim",
     "simpleini",
     "stb",
+    "nlohmann-json",
     {
       "name": "imgui",
       "features": [

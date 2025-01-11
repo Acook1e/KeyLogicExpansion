@@ -1,17 +1,22 @@
 #include "gui.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <nlohmann/json.hpp>
 
 namespace GUI
 {
+
+static ID3D11Device *device;
+
 typedef struct
 {
     uint32_t code;
-    const char *name;
+    std::string name;
 } NameMap;
 static std::vector<NameMap> KeyNameMap;
+static std::vector<NameMap> attackTypeName;
 
-static ID3D11Device *device;
+static std::vector<std::string> localeList;
 
 static bool showGui = false;
 bool showSettings;
@@ -21,120 +26,200 @@ static bool showStances;
 
 static uint64_t tmpMouse;
 
-void buildKeyNameMap()
+class Locale
 {
-    KeyNameMap = {
-        {0, "Disable"},
-        {KeyUtils::KeyBoard::ESC, "ESC"},
-        {KeyUtils::KeyBoard::Enter, "Enter"},
-        {KeyUtils::KeyBoard::Space, "Space"},
-        {KeyUtils::KeyBoard::LeftCtrl, "LeftCtrl"},
-        {KeyUtils::KeyBoard::RightCtrl, "RightCtrl"},
-        {KeyUtils::KeyBoard::LeftShift, "LeftShift"},
-        {KeyUtils::KeyBoard::RightShift, "RightShift"},
-        {KeyUtils::KeyBoard::LeftAlt, "LeftAlt"},
-        {KeyUtils::KeyBoard::RightAlt, "RightAlt"},
-        {KeyUtils::KeyBoard::Backspace, "Backspace"},
-        {KeyUtils::KeyBoard::Home, "Home"},
-        {KeyUtils::KeyBoard::End, "End"},
-        {KeyUtils::KeyBoard::Insert, "Insert"},
-        {KeyUtils::KeyBoard::PageUp, "PageUp"},
-        {KeyUtils::KeyBoard::PageDown, "PageDown"},
-        {KeyUtils::KeyBoard::Delete, "Delete"},
-        {KeyUtils::KeyBoard::PrtSc, "PrtSc"},
-        {KeyUtils::KeyBoard::Pause, "Pause"},
-        {KeyUtils::KeyBoard::CapsLock, "CapsLock"},
-        {KeyUtils::KeyBoard::NumLock, "NumLock"},
-        {KeyUtils::KeyBoard::SrcollLock, "SrcollLock"},
-        {KeyUtils::KeyBoard::Tab, "Tab"},
-        {KeyUtils::KeyBoard::MAIN1, "1"},
-        {KeyUtils::KeyBoard::MAIN2, "2"},
-        {KeyUtils::KeyBoard::MAIN3, "3"},
-        {KeyUtils::KeyBoard::MAIN4, "4"},
-        {KeyUtils::KeyBoard::MAIN5, "5"},
-        {KeyUtils::KeyBoard::MAIN6, "6"},
-        {KeyUtils::KeyBoard::MAIN7, "7"},
-        {KeyUtils::KeyBoard::MAIN8, "8"},
-        {KeyUtils::KeyBoard::MAIN9, "9"},
-        {KeyUtils::KeyBoard::MAIN0, "0"},
-        {KeyUtils::KeyBoard::Minus, "-"},
-        {KeyUtils::KeyBoard::Equals, "="},
-        {KeyUtils::KeyBoard::Q, "Q"},
-        {KeyUtils::KeyBoard::W, "W"},
-        {KeyUtils::KeyBoard::E, "E"},
-        {KeyUtils::KeyBoard::R, "R"},
-        {KeyUtils::KeyBoard::T, "T"},
-        {KeyUtils::KeyBoard::Y, "Y"},
-        {KeyUtils::KeyBoard::U, "U"},
-        {KeyUtils::KeyBoard::I, "I"},
-        {KeyUtils::KeyBoard::O, "O"},
-        {KeyUtils::KeyBoard::P, "P"},
-        {KeyUtils::KeyBoard::A, "A"},
-        {KeyUtils::KeyBoard::S, "S"},
-        {KeyUtils::KeyBoard::D, "D"},
-        {KeyUtils::KeyBoard::F, "F"},
-        {KeyUtils::KeyBoard::G, "G"},
-        {KeyUtils::KeyBoard::H, "H"},
-        {KeyUtils::KeyBoard::J, "K"},
-        {KeyUtils::KeyBoard::L, "L"},
-        {KeyUtils::KeyBoard::Z, "Z"},
-        {KeyUtils::KeyBoard::X, "X"},
-        {KeyUtils::KeyBoard::C, "C"},
-        {KeyUtils::KeyBoard::V, "V"},
-        {KeyUtils::KeyBoard::B, "B"},
-        {KeyUtils::KeyBoard::N, "N"},
-        {KeyUtils::KeyBoard::M, "M"},
-        {KeyUtils::KeyBoard::ArrowUp, "ArrowUp"},
-        {KeyUtils::KeyBoard::ArrowDown, "ArrowDown"},
-        {KeyUtils::KeyBoard::ArrowLeft, "ArrowLeft"},
-        {KeyUtils::KeyBoard::ArrowRight, "ArrowRight"},
-        {KeyUtils::KeyBoard::LeftBracket, "["},
-        {KeyUtils::KeyBoard::RightBracket, "]"},
-        {KeyUtils::KeyBoard::Console, "~"},
-        {KeyUtils::KeyBoard::Semicolon, ";"},
-        {KeyUtils::KeyBoard::Apostrophe, "'"},
-        {KeyUtils::KeyBoard::Comma, ","},
-        {KeyUtils::KeyBoard::Period, "."},
-        {KeyUtils::KeyBoard::Slash, "/"},
-        {KeyUtils::KeyBoard::BackSlash, "\\"},
-        {KeyUtils::KeyBoard::F1, "F1"},
-        {KeyUtils::KeyBoard::F2, "F2"},
-        {KeyUtils::KeyBoard::F3, "F3"},
-        {KeyUtils::KeyBoard::F4, "F4"},
-        {KeyUtils::KeyBoard::F5, "F5"},
-        {KeyUtils::KeyBoard::F6, "F6"},
-        {KeyUtils::KeyBoard::F7, "F7"},
-        {KeyUtils::KeyBoard::F8, "F8"},
-        {KeyUtils::KeyBoard::F9, "F9"},
-        {KeyUtils::KeyBoard::F10, "F10"},
-        {KeyUtils::KeyBoard::F11, "F11"},
-        {KeyUtils::KeyBoard::F12, "F12"},
-        {KeyUtils::KeyBoard::NUM0, "NUM0"},
-        {KeyUtils::KeyBoard::NUM1, "NUM1"},
-        {KeyUtils::KeyBoard::NUM2, "NUM2"},
-        {KeyUtils::KeyBoard::NUM3, "NUM3"},
-        {KeyUtils::KeyBoard::NUM4, "NUM4"},
-        {KeyUtils::KeyBoard::NUM5, "NUM5"},
-        {KeyUtils::KeyBoard::NUM6, "NUM6"},
-        {KeyUtils::KeyBoard::NUM7, "NUM7"},
-        {KeyUtils::KeyBoard::NUM8, "NUM8"},
-        {KeyUtils::KeyBoard::NUM9, "NUM9"},
-        {KeyUtils::KeyBoard::NUM_Minus, "NUM-"},
-        {KeyUtils::KeyBoard::NUM_Plus, "NUM+"},
-        {KeyUtils::KeyBoard::NUM_star, "NUM*"},
-        {KeyUtils::KeyBoard::NUM_Slash, "NUM/"},
-        {KeyUtils::KeyBoard::NUM_Dot, "NUM."},
-        {KeyUtils::KeyBoard::NUM_Enter, "NUM_Enter"},
-        {KeyUtils::Mouse::MouseButtonLeft, "MouseButtonLeft"},
-        {KeyUtils::Mouse::MouseButtonRight, "MouseButtonRight"},
-        {KeyUtils::Mouse::MouseButtonMiddle, "MouseButtonMiddle"},
-        {KeyUtils::Mouse::MouseButton3, "M4"},
-        {KeyUtils::Mouse::MouseButton4, "M5"},
-        {KeyUtils::Mouse::MouseWheelUp, "MouseWheelUp"},
-        {KeyUtils::Mouse::MouseWheelDown, "MouseWheelDown"},
-        {1000000, "None"},
-    };
-}
+  public:
+    Locale()
+    {
+        std::regex json_pattern(".*\\.json$");
+        for (const auto &entry : std::filesystem::directory_iterator(localePath))
+            if (std::filesystem::is_regular_file(entry.status()) &&
+                std::regex_match(entry.path().filename().string(), json_pattern))
+                localeList.push_back(entry.path().stem().string());
+    }
+
+    Locale(std::string locale)
+    {
+        std::ifstream file(localePath + locale + ".json");
+        if (!file.is_open())
+        {
+            logger::warn("Cannot find Locale file: {}.json ,try using en_US.", locale);
+            file.close();
+            std::ifstream file(localePath + "en_US.json");
+        }
+
+        file >> json;
+        file.close();
+
+        buildMap();
+    }
+
+    ~Locale()
+    {
+    }
+
+    std::string GetStr(const std::initializer_list<std::string> &strings)
+    {
+        nlohmann::json current = json;
+        for (const auto &str : strings)
+        {
+            if (current.contains(str))
+            {
+                current = current.at(str);
+                if (current.is_string())
+                    return current.get<std::string>();
+            }
+            else
+                return NotExist;
+        }
+        return NotExist;
+    }
+
+    double GetNumber(const std::initializer_list<std::string> &strings)
+    {
+        nlohmann::json current = json;
+        for (const auto &str : strings)
+        {
+            if (current.contains(str))
+            {
+                current = current.at(str);
+                if (current.is_number())
+                    return current.get<double>();
+            }
+            else
+                return 0;
+        }
+        return 0;
+    }
+
+    void buildMap()
+    {
+        KeyNameMap = {
+            {0, "Disable"},
+            {KeyUtils::KeyBoard::ESC, "ESC"},
+            {KeyUtils::KeyBoard::Enter, "Enter"},
+            {KeyUtils::KeyBoard::Space, "Space"},
+            {KeyUtils::KeyBoard::LeftCtrl, "LeftCtrl"},
+            {KeyUtils::KeyBoard::RightCtrl, "RightCtrl"},
+            {KeyUtils::KeyBoard::LeftShift, "LeftShift"},
+            {KeyUtils::KeyBoard::RightShift, "RightShift"},
+            {KeyUtils::KeyBoard::LeftAlt, "LeftAlt"},
+            {KeyUtils::KeyBoard::RightAlt, "RightAlt"},
+            {KeyUtils::KeyBoard::Backspace, "Backspace"},
+            {KeyUtils::KeyBoard::Home, "Home"},
+            {KeyUtils::KeyBoard::End, "End"},
+            {KeyUtils::KeyBoard::Insert, "Insert"},
+            {KeyUtils::KeyBoard::PageUp, "PageUp"},
+            {KeyUtils::KeyBoard::PageDown, "PageDown"},
+            {KeyUtils::KeyBoard::Delete, "Delete"},
+            {KeyUtils::KeyBoard::PrtSc, "PrtSc"},
+            {KeyUtils::KeyBoard::Pause, "Pause"},
+            {KeyUtils::KeyBoard::CapsLock, "CapsLock"},
+            {KeyUtils::KeyBoard::NumLock, "NumLock"},
+            {KeyUtils::KeyBoard::SrcollLock, "SrcollLock"},
+            {KeyUtils::KeyBoard::Tab, "Tab"},
+            {KeyUtils::KeyBoard::MAIN1, "1"},
+            {KeyUtils::KeyBoard::MAIN2, "2"},
+            {KeyUtils::KeyBoard::MAIN3, "3"},
+            {KeyUtils::KeyBoard::MAIN4, "4"},
+            {KeyUtils::KeyBoard::MAIN5, "5"},
+            {KeyUtils::KeyBoard::MAIN6, "6"},
+            {KeyUtils::KeyBoard::MAIN7, "7"},
+            {KeyUtils::KeyBoard::MAIN8, "8"},
+            {KeyUtils::KeyBoard::MAIN9, "9"},
+            {KeyUtils::KeyBoard::MAIN0, "0"},
+            {KeyUtils::KeyBoard::Minus, "-"},
+            {KeyUtils::KeyBoard::Equals, "="},
+            {KeyUtils::KeyBoard::Q, "Q"},
+            {KeyUtils::KeyBoard::W, "W"},
+            {KeyUtils::KeyBoard::E, "E"},
+            {KeyUtils::KeyBoard::R, "R"},
+            {KeyUtils::KeyBoard::T, "T"},
+            {KeyUtils::KeyBoard::Y, "Y"},
+            {KeyUtils::KeyBoard::U, "U"},
+            {KeyUtils::KeyBoard::I, "I"},
+            {KeyUtils::KeyBoard::O, "O"},
+            {KeyUtils::KeyBoard::P, "P"},
+            {KeyUtils::KeyBoard::A, "A"},
+            {KeyUtils::KeyBoard::S, "S"},
+            {KeyUtils::KeyBoard::D, "D"},
+            {KeyUtils::KeyBoard::F, "F"},
+            {KeyUtils::KeyBoard::G, "G"},
+            {KeyUtils::KeyBoard::H, "H"},
+            {KeyUtils::KeyBoard::J, "K"},
+            {KeyUtils::KeyBoard::L, "L"},
+            {KeyUtils::KeyBoard::Z, "Z"},
+            {KeyUtils::KeyBoard::X, "X"},
+            {KeyUtils::KeyBoard::C, "C"},
+            {KeyUtils::KeyBoard::V, "V"},
+            {KeyUtils::KeyBoard::B, "B"},
+            {KeyUtils::KeyBoard::N, "N"},
+            {KeyUtils::KeyBoard::M, "M"},
+            {KeyUtils::KeyBoard::ArrowUp, "ArrowUp"},
+            {KeyUtils::KeyBoard::ArrowDown, "ArrowDown"},
+            {KeyUtils::KeyBoard::ArrowLeft, "ArrowLeft"},
+            {KeyUtils::KeyBoard::ArrowRight, "ArrowRight"},
+            {KeyUtils::KeyBoard::LeftBracket, "["},
+            {KeyUtils::KeyBoard::RightBracket, "]"},
+            {KeyUtils::KeyBoard::Console, "~"},
+            {KeyUtils::KeyBoard::Semicolon, ";"},
+            {KeyUtils::KeyBoard::Apostrophe, "'"},
+            {KeyUtils::KeyBoard::Comma, ","},
+            {KeyUtils::KeyBoard::Period, "."},
+            {KeyUtils::KeyBoard::Slash, "/"},
+            {KeyUtils::KeyBoard::BackSlash, "\\"},
+            {KeyUtils::KeyBoard::F1, "F1"},
+            {KeyUtils::KeyBoard::F2, "F2"},
+            {KeyUtils::KeyBoard::F3, "F3"},
+            {KeyUtils::KeyBoard::F4, "F4"},
+            {KeyUtils::KeyBoard::F5, "F5"},
+            {KeyUtils::KeyBoard::F6, "F6"},
+            {KeyUtils::KeyBoard::F7, "F7"},
+            {KeyUtils::KeyBoard::F8, "F8"},
+            {KeyUtils::KeyBoard::F9, "F9"},
+            {KeyUtils::KeyBoard::F10, "F10"},
+            {KeyUtils::KeyBoard::F11, "F11"},
+            {KeyUtils::KeyBoard::F12, "F12"},
+            {KeyUtils::KeyBoard::NUM0, "NUM0"},
+            {KeyUtils::KeyBoard::NUM1, "NUM1"},
+            {KeyUtils::KeyBoard::NUM2, "NUM2"},
+            {KeyUtils::KeyBoard::NUM3, "NUM3"},
+            {KeyUtils::KeyBoard::NUM4, "NUM4"},
+            {KeyUtils::KeyBoard::NUM5, "NUM5"},
+            {KeyUtils::KeyBoard::NUM6, "NUM6"},
+            {KeyUtils::KeyBoard::NUM7, "NUM7"},
+            {KeyUtils::KeyBoard::NUM8, "NUM8"},
+            {KeyUtils::KeyBoard::NUM9, "NUM9"},
+            {KeyUtils::KeyBoard::NUM_Minus, "NUM-"},
+            {KeyUtils::KeyBoard::NUM_Plus, "NUM+"},
+            {KeyUtils::KeyBoard::NUM_star, "NUM*"},
+            {KeyUtils::KeyBoard::NUM_Slash, "NUM/"},
+            {KeyUtils::KeyBoard::NUM_Dot, "NUM."},
+            {KeyUtils::KeyBoard::NUM_Enter, "NUM_Enter"},
+            {KeyUtils::Mouse::MouseButtonLeft, "MouseButtonLeft"},
+            {KeyUtils::Mouse::MouseButtonRight, "MouseButtonRight"},
+            {KeyUtils::Mouse::MouseButtonMiddle, "MouseButtonMiddle"},
+            {KeyUtils::Mouse::MouseButton3, "M4"},
+            {KeyUtils::Mouse::MouseButton4, "M5"},
+            {KeyUtils::Mouse::MouseWheelUp, "MouseWheelUp"},
+            {KeyUtils::Mouse::MouseWheelDown, "MouseWheelDown"},
+            {1000000, "None"},
+        };
+
+        attackTypeName = {
+            {0, this->GetStr({"AttackTypeName", "None"})},       {1, this->GetStr({"AttackTypeName", "RightHand"})},
+            {2, this->GetStr({"AttackTypeName", "LeftHand"})},   {3, this->GetStr({"AttackTypeName", "DualHand"})},
+            {4, this->GetStr({"AttackTypeName", "VanillaLMB"})}, {5, this->GetStr({"AttackTypeName", "VanillaRMB"})}};
+    }
+
+  private:
+    static std::string localePath;
+    static std::string NotExist;
+    nlohmann::json json;
+};
+std::string Locale::localePath = "Data/SKSE/Plugins/KeyLogicExpansion/Locale/";
+std::string Locale::NotExist = "Value Not Exist";
+static Locale locale;
 
 const char *GetNameByKey(uint32_t code)
 {
@@ -142,13 +227,36 @@ const char *GetNameByKey(uint32_t code)
     if (res == KeyNameMap.end())
         return "None";
     else
-        return res->name;
+        return res->name.data();
 }
 
 void SwitchButton(const char *name, bool &value, const char *description = "")
 {
     ImGui::Checkbox(name, &value);
     if (ImGui::IsItemHovered())
+        ImGui::SetTooltip(description);
+}
+
+void SelectLanguage(const char *name, std::string &language, const char *description = nullptr)
+{
+    if (ImGui::BeginCombo(name, language.data()))
+    {
+        for (auto item : localeList)
+        {
+            bool is_selected = (language == item);
+            if (ImGui::Selectable(item.data(), is_selected))
+            {
+                language = item;
+                showGui = false;
+                locale = Locale(language);
+                showGui = true;
+            }
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    if (description && ImGui::IsItemHovered())
         ImGui::SetTooltip(description);
 }
 
@@ -159,7 +267,7 @@ void SelectButton(const char *name, uint32_t &code, const char *description = nu
         for (auto item : KeyNameMap)
         {
             bool is_selected = (code == item.code);
-            if (ImGui::Selectable(item.name, is_selected))
+            if (ImGui::Selectable(item.name.data(), is_selected))
                 code = item.code;
             if (is_selected)
                 ImGui::SetItemDefaultFocus();
@@ -170,18 +278,16 @@ void SelectButton(const char *name, uint32_t &code, const char *description = nu
         ImGui::SetTooltip(description);
 }
 
-static std::vector<NameMap> attackTypeName = {{0, "None"},     {1, "RightHand"},  {2, "LeftHand"},
-                                              {3, "DualHand"}, {4, "VanillaLMB"}, {5, "VanillaRMB"}};
 void SelectAttackType(const char *name, Style::AttackType &type, const char *description = nullptr)
 {
     auto res =
         std::find_if(attackTypeName.begin(), attackTypeName.end(), [type](NameMap map) { return type == map.code; });
-    if (ImGui::BeginCombo(name, res->name))
+    if (ImGui::BeginCombo(name, res->name.data()))
     {
         for (auto item : attackTypeName)
         {
             bool is_selected = (type == item.code);
-            if (ImGui::Selectable(item.name, is_selected))
+            if (ImGui::Selectable(item.name.data(), is_selected))
                 type = (Style::AttackType)item.code;
             if (is_selected)
                 ImGui::SetItemDefaultFocus();
@@ -214,7 +320,7 @@ typedef struct
 Image GetImage(std::string image)
 {
     int width, height, channels;
-    stbi_uc *data = stbi_load(image.c_str(), &width, &height, &channels, 0);
+    stbi_uc *data = stbi_load(image.data(), &width, &height, &channels, 0);
     ID3D11ShaderResourceView *pSRV = nullptr;
     if (data)
     {
@@ -261,183 +367,211 @@ void KeyBindSettings()
 {
     ImGui::Begin("KeyBind Settings", &showSettings, ImGuiWindowFlags_NoCollapse);
 
-    if (ImGui::Button("Save to InI"))
+    if (ImGui::Button(locale.GetStr({"Save", "name"}).data()))
     {
         Config::saveInI();
-        ImGui::Text("Save to ini...");
+        ImGui::Text(locale.GetStr({"Save", "description"}).data());
     }
 
-    SwitchButton("ShowCustomSettings", showCustom);
-    SwitchButton("ShowStatusSettings", showStatus, "Whether Show PlayerStatus, Now only has Stances");
-    SwitchButton("ShowCurrentStance", showStances);
+    SelectLanguage(locale.GetStr({"Language", "name"}).data(), Config::locale,
+                   locale.GetStr({"Language", "description"}).data());
+
+    SwitchButton(locale.GetStr({"ShowCustomSettings", "name"}).data(), showCustom,
+                 locale.GetStr({"ShowCustomSettings", "description"}).data());
+    SwitchButton(locale.GetStr({"ShowStatusSettings", "name"}).data(), showStatus,
+                 locale.GetStr({"ShowStatusSettings", "description"}).data());
+    SwitchButton(locale.GetStr({"ShowCurrentStance", "name"}).data(), showStances);
     ImGui::Spacing();
-    if (ImGui::TreeNode("Features"))
+    if (ImGui::TreeNode(locale.GetStr({"Nodes", "Features"}).data()))
     {
-        SwitchButton("EnableCustomInput", Custom::enableCustomInput,
-                     "Enable custom Input, maybe this is the reason you install this mod.");
-        SwitchButton("EnableStances", Stances::enableStances,
-                     "Enable Stances Supported by KLE\nContain 4 types "
-                     "of stance: High, Mid, Low and Sheathe.\nIf you switch to Sheathe, you should press Modifier and "
-                     "Sheathe key.");
-        SwitchButton("EnableHoldSprint", Config::enableHoldSprint, "Change enable sprint when you hold sprint key");
-        SwitchButton("EnableHoldSneak", Config::enableHoldSneak,
-                     "Same as EnableHoldSprint, Change enable sneak when you hold sneak key");
-        SwitchButton("EnableSprintAttack", Config::enableSprintAttack, "Whether use sprint attack, include power");
-        SwitchButton("EnableReverseHorseAttack", Config::enableReverseHorseAttack,
-                     "Reverse your HorseAttack diretion, if enable this, left key attack left, right key attack right");
-        SelectButton(
-            "EnableSheatheAttack", Config::enableSheatheAttack,
-            "Make you can attack when you press this key, NOT completed.\n0 means disable, other number means a "
-            "keycode\n"
-            "when you press the key and Attack or PowerAttack or even Sheathe Key, you will do a SheatheAttack\nNote: "
-            "Press with Sheathe Key can do SheatheAttack when you are NOT in Sheathe status.");
+        SwitchButton(locale.GetStr({"EnableCustomInput", "name"}).data(), Custom::enableCustomInput,
+                     locale.GetStr({"EnableCustomInput", "description"}).data());
+        SwitchButton(locale.GetStr({"EnableStances", "name"}).data(), Stances::enableStances,
+                     locale.GetStr({"EnableStances", "description"}).data());
+        SwitchButton(locale.GetStr({"EnableHoldSprint", "name"}).data(), Config::enableHoldSprint,
+                     locale.GetStr({"EnableHoldSprint", "description"}).data());
+        SwitchButton(locale.GetStr({"EnableHoldSneak", "name"}).data(), Config::enableHoldSneak,
+                     locale.GetStr({"EnableHoldSneak", "description"}).data());
+        SwitchButton(locale.GetStr({"EnableSprintAttack", "name"}).data(), Config::enableSprintAttack,
+                     locale.GetStr({"EnableSprintAttack", "description"}).data());
+        SwitchButton(locale.GetStr({"EnableReverseHorseAttack", "name"}).data(), Config::enableReverseHorseAttack,
+                     locale.GetStr({"EnableReverseHorseAttack", "description"}).data());
+        SelectButton(locale.GetStr({"EnableSheatheAttack", "name"}).data(), Config::enableSheatheAttack,
+                     locale.GetStr({"EnableSheatheAttack", "description"}).data());
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Stances"))
+    if (ImGui::TreeNode(locale.GetStr({"Nodes", "Stances"}).data()))
     {
-        SelectButton("StancesModifier", Stances::StancesModfier, "Set change stance key, modifier = 0 means disable");
-        SelectButton("ChangeToLow", Stances::ChangeToLow);
-        SelectButton("ChangeToMid", Stances::ChangeToMid);
-        SelectButton("ChangeToHigh", Stances::ChangeToHigh);
+        SelectButton(locale.GetStr({"StancesModifier", "name"}).data(), Stances::StancesModfier,
+                     locale.GetStr({"StancesModifier", "description"}).data());
+        SelectButton(locale.GetStr({"ChangeToLow", "name"}).data(), Stances::ChangeToLow,
+                     locale.GetStr({"ChangeToLow", "description"}).data());
+        SelectButton(locale.GetStr({"ChangeToMid", "name"}).data(), Stances::ChangeToMid,
+                     locale.GetStr({"ChangeToMid", "description"}).data());
+        SelectButton(locale.GetStr({"ChangeToHigh", "name"}).data(), Stances::ChangeToHigh,
+                     locale.GetStr({"ChangeToHigh", "description"}).data());
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Vanilla"))
+    if (ImGui::TreeNode(locale.GetStr({"Nodes", "Vanilla"}).data()))
     {
-        SelectButton("NormalAttack", Config::normalAttack, "NormalAttack Key used in KLE system");
-        SelectButton("PowerAttack", Config::powerAttack, "PowerAttack Key used in KLE system");
-        SelectButton("OtherAttack", Config::otherAttack,
-                     "OtherAttack Key used in KLE system, can only use VanillaLMB and VanillaRMB type");
-        SelectButton("Block", Config::block, "separete block key from Attack");
+        SelectButton(locale.GetStr({"NormalAttack", "name"}).data(), Config::normalAttack,
+                     locale.GetStr({"NormalAttack", "description"}).data());
+        SelectButton(locale.GetStr({"PowerAttack", "name"}).data(), Config::powerAttack,
+                     locale.GetStr({"PowerAttack", "description"}).data());
+        SelectButton(locale.GetStr({"OtherAttack", "name"}).data(), Config::otherAttack,
+                     locale.GetStr({"OtherAttack", "description"}).data());
+        SelectButton(locale.GetStr({"Block", "name"}).data(), Config::block,
+                     locale.GetStr({"Block", "description"}).data());
         ImGui::Spacing();
-        SelectButton("AltTweenMenu", Config::altTweenMenu, "instead Vanilla Key");
-        SelectButton("AltTogglePOV", Config::altTogglePOV, "instead Vanilla Key");
+        SelectButton(locale.GetStr({"AltTweenMenu", "name"}).data(), Config::altTweenMenu,
+                     locale.GetStr({"AltTweenMenu", "description"}).data());
+        SelectButton(locale.GetStr({"AltTogglePOV", "name"}).data(), Config::altTogglePOV,
+                     locale.GetStr({"AltTogglePOV", "description"}).data());
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Style"))
+    if (ImGui::TreeNode(locale.GetStr({"Nodes", "Style"}).data()))
     {
-        IntText("PreInput Time", Style::styleMap[Style::currentStyle].preInputTime,
-                "How long a PreInput exist, recommended 100 - 200", 20, 1000, 10, 100);
-        IntText(
-            "Interval Time", Style::styleMap[Style::currentStyle].intervalTime,
-            "How long between 2 attacks, recommended 20 - 50, too small will attack out of exception, too long won't "
-            "attack",
-            10, 200, 5, 10);
+        IntText(locale.GetStr({"PreInputTime", "name"}).data(), Style::styleMap[Style::currentStyle].preInputTime,
+                locale.GetStr({"PreInputTime", "description"}).data(), 20, 1000, 10, 100);
+        IntText(locale.GetStr({"IntervalTime", "name"}).data(), Style::styleMap[Style::currentStyle].intervalTime,
+                locale.GetStr({"IntervalTime", "description"}).data(), 10, 200, 5, 10);
         ImGui::Spacing();
-        ImGui::Text("Current Style: %s", Style::GetStyleName(Style::currentStyle));
-        SelectAttackType("NormalAttackType", Style::styleMap[Style::currentStyle].normalAttackType,
-                         "For BFCO/MCO, Right means Dual, you can try any types, maybe crash or maybe funny");
-        SwitchButton("RepeatNormalAttack", Style::styleMap[Style::currentStyle].repeatNormalAttack,
-                     "Whether repeat attack when hold key");
-        SwitchButton("SheatheNormalAttack", Style::styleMap[Style::currentStyle].sheatheNormalAttack,
-                     "Whether KLE normal attack can sheathe");
+        ImGui::Text((locale.GetStr({"CurrentStyle", "name"}) +
+                     locale.GetStr({"Styles", Style::GetStyleName(Style::currentStyle)}))
+                        .data());
+        SelectAttackType(locale.GetStr({"NormalAttackType", "name"}).data(),
+                         Style::styleMap[Style::currentStyle].normalAttackType,
+                         locale.GetStr({"NormalAttackType", "description"}).data());
+        SwitchButton(locale.GetStr({"RepeatNormalAttack", "name"}).data(),
+                     Style::styleMap[Style::currentStyle].repeatNormalAttack,
+                     locale.GetStr({"RepeatNormalAttack", "description"}).data());
+        SwitchButton(locale.GetStr({"SheatheNormalAttack", "name"}).data(),
+                     Style::styleMap[Style::currentStyle].sheatheNormalAttack,
+                     locale.GetStr({"SheatheNormalAttack", "description"}).data());
         ImGui::Spacing();
-        SelectAttackType("PowerAttackType", Style::styleMap[Style::currentStyle].powerAttackType,
-                         "For BFCO/MCO, Right means Dual");
-        SwitchButton("RepeatPowerAttack", Style::styleMap[Style::currentStyle].repeatPowerAttack,
-                     "Whether repeat attack when hold key");
-        SwitchButton("SheathePowerAttack", Style::styleMap[Style::currentStyle].sheathePowerAttack,
-                     "Whether KLE power attack can sheathe");
+        SelectAttackType(locale.GetStr({"PowerAttackType", "name"}).data(),
+                         Style::styleMap[Style::currentStyle].powerAttackType,
+                         locale.GetStr({"PowerAttackType", "description"}).data());
+        SwitchButton(locale.GetStr({"RepeatPowerAttack", "name"}).data(),
+                     Style::styleMap[Style::currentStyle].repeatPowerAttack,
+                     locale.GetStr({"RepeatPowerAttack", "description"}).data());
+        SwitchButton(locale.GetStr({"SheathePowerAttack", "name"}).data(),
+                     Style::styleMap[Style::currentStyle].sheathePowerAttack,
+                     locale.GetStr({"SheathePowerAttack", "description"}).data());
         ImGui::Spacing();
-        SelectAttackType("OtherAttackType", Style::styleMap[Style::currentStyle].otherAttackType,
-                         "only VanillaLMB and VanillaRMB available");
-        SwitchButton("SheatheOtherAttack", Style::styleMap[Style::currentStyle].sheatheOtherAttack,
-                     "Whether KLE other attack can sheathe");
+        SelectAttackType(locale.GetStr({"OtherAttackType", "name"}).data(),
+                         Style::styleMap[Style::currentStyle].otherAttackType,
+                         locale.GetStr({"OtherAttackType", "description"}).data());
+        SwitchButton(locale.GetStr({"SheatheOtherAttack", "name"}).data(),
+                     Style::styleMap[Style::currentStyle].sheatheOtherAttack,
+                     locale.GetStr({"SheatheOtherAttack", "description"}).data());
         ImGui::Spacing();
-        SwitchButton("IsAltTypeEnable", Style::styleMap[Style::currentStyle].isAltTypeEnable,
-                     "Whether AltTypeModifier works now.");
-        SwitchButton("IsUsingHold", Style::styleMap[Style::currentStyle].isUsingHold,
-                     "Press modifier to swicth immediately or hold to switch");
-        SelectButton("VanillaModifier", Style::styleMap[Style::currentStyle].attackTypeModifier,
-                     "If you press this key, KLE will temporarily use another attack type.");
-        SelectAttackType("AltNormalAttackType", Style::styleMap[Style::currentStyle].altNormalAttackType,
-                         "Vanilla LMB and RMB means you can cast spell or using staff, like Vanilla logic");
-        SelectAttackType("AltPowerAttackType", Style::styleMap[Style::currentStyle].altPowerAttackType,
-                         "Vanilla LMB and RMB means you can cast spell or using staff, like Vanilla logic");
-        SelectAttackType("AltPowerAttackType", Style::styleMap[Style::currentStyle].altOtherAttackType,
-                         "Vanilla LMB and RMB means you can cast spell or using staff, like Vanilla logic");
+        SwitchButton(locale.GetStr({"IsAltTypeEnable", "name"}).data(),
+                     Style::styleMap[Style::currentStyle].isAltTypeEnable,
+                     locale.GetStr({"IsAltTypeEnable", "description"}).data());
+        SwitchButton(locale.GetStr({"IsUsingHold", "name"}).data(), Style::styleMap[Style::currentStyle].isUsingHold,
+                     locale.GetStr({"IsUsingHold", "description"}).data());
+        SelectButton(locale.GetStr({"AltModifier", "name"}).data(),
+                     Style::styleMap[Style::currentStyle].attackTypeModifier,
+                     locale.GetStr({"AltModifier", "description"}).data());
+        SelectAttackType(locale.GetStr({"AltNormalAttackType", "name"}).data(),
+                         Style::styleMap[Style::currentStyle].altNormalAttackType,
+                         locale.GetStr({"AltNormalAttackType", "description"}).data());
+        SelectAttackType(locale.GetStr({"AltPowerAttackType", "name"}).data(),
+                         Style::styleMap[Style::currentStyle].altPowerAttackType,
+                         locale.GetStr({"AltPowerAttackType", "description"}).data());
+        SelectAttackType(locale.GetStr({"AltOtherAttackType", "name"}).data(),
+                         Style::styleMap[Style::currentStyle].altOtherAttackType,
+                         locale.GetStr({"AltOtherAttackType", "description"}).data());
         ImGui::TreePop();
     }
     if (Compatibility::BFCO)
     {
-        if (ImGui::TreeNode("BFCO"))
+        if (ImGui::TreeNode(locale.GetStr({"Nodes", "BFCO"}).data()))
         {
-            SelectButton("BFCO SpecialAttackModifier", Config::BFCO_SpecialAttackModifier);
-            SelectButton("BFCO ComboAttack", Config::BFCO_ComboAttack);
+            SelectButton(locale.GetStr({"BFCO_SpecialAttackModifier", "name"}).data(),
+                         Config::BFCO_SpecialAttackModifier,
+                         locale.GetStr({"BFCO_SpecialAttackModifier", "description"}).data());
+            SelectButton(locale.GetStr({"BFCO_ComboAttack", "name"}).data(), Config::BFCO_ComboAttack,
+                         locale.GetStr({"BFCO_ComboAttack", "description"}).data());
             ImGui::TreePop();
         }
     }
 
-    if (ImGui::TreeNode("Expand"))
+    if (ImGui::TreeNode(locale.GetStr({"Nodes", "Expand"}).data()))
     {
-        SelectButton("WarAshModifier", Config::warAshModifier);
-        SelectButton("WarAsh", Config::warAsh, "EldenRim WarAsh support, press this to use WarAsh.");
+        SelectButton(locale.GetStr({"WarAshModifier", "name"}).data(), Config::warAshModifier,
+                     locale.GetStr({"WarAshModifier", "description"}).data());
+        SelectButton(locale.GetStr({"WarAsh", "name"}).data(), Config::warAsh,
+                     locale.GetStr({"WarAsh", "description"}).data());
         ImGui::Spacing();
-        SelectButton("ZoomModifier", Config::zoomModifier,
-                     "set it to Non 0 can instead default ZoomIn and ZoomOut \nyou don't konw what it mean? just "
-                     "Vanilla MouseWheelUp and MouseWheelDwon");
-        SelectButton("AltZoomIn", Config::altZoomIn);
-        SelectButton("AltZoomOut", Config::altZoomOut);
+        SelectButton(locale.GetStr({"ZoomModifier", "name"}).data(), Config::zoomModifier,
+                     locale.GetStr({"ZoomModifier", "description"}).data());
+        SelectButton(locale.GetStr({"AltZoomIn", "name"}).data(), Config::altZoomIn,
+                     locale.GetStr({"AltZoomIn", "description"}).data());
+        SelectButton(locale.GetStr({"AltZoomOut", "name"}).data(), Config::altZoomOut,
+                     locale.GetStr({"AltZoomOut", "description"}).data());
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Modifier"))
+    if (ImGui::TreeNode(locale.GetStr({"Nodes", "Modifier"}).data()))
     {
-        SelectButton(VarUtils::userEvent->forward.c_str(),
+        SelectButton(VarUtils::userEvent->forward.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->forward)]);
-        SelectButton(VarUtils::userEvent->strafeLeft.c_str(),
+        SelectButton(VarUtils::userEvent->strafeLeft.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->strafeLeft)]);
-        SelectButton(VarUtils::userEvent->back.c_str(),
+        SelectButton(VarUtils::userEvent->back.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->back)]);
-        SelectButton(VarUtils::userEvent->strafeRight.c_str(),
+        SelectButton(VarUtils::userEvent->strafeRight.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->strafeRight)]);
-        SelectButton(VarUtils::userEvent->rightAttack.c_str(),
+        SelectButton(VarUtils::userEvent->rightAttack.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->rightAttack)]);
-        SelectButton(VarUtils::userEvent->leftAttack.c_str(),
+        SelectButton(VarUtils::userEvent->leftAttack.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->leftAttack)]);
-        SelectButton(VarUtils::userEvent->activate.c_str(),
+        SelectButton(VarUtils::userEvent->activate.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->activate)]);
-        SelectButton(VarUtils::userEvent->readyWeapon.c_str(),
+        SelectButton(VarUtils::userEvent->readyWeapon.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->readyWeapon)]);
-        SelectButton(VarUtils::userEvent->tweenMenu.c_str(),
+        SelectButton(VarUtils::userEvent->tweenMenu.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->tweenMenu)]);
-        SelectButton(VarUtils::userEvent->togglePOV.c_str(),
+        SelectButton(VarUtils::userEvent->togglePOV.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->togglePOV)]);
-        SelectButton(VarUtils::userEvent->jump.c_str(),
+        SelectButton(VarUtils::userEvent->jump.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->jump)]);
-        SelectButton(VarUtils::userEvent->sprint.c_str(),
+        SelectButton(VarUtils::userEvent->sprint.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->sprint)]);
-        SelectButton(VarUtils::userEvent->shout.c_str(),
+        SelectButton(VarUtils::userEvent->shout.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->shout)]);
-        SelectButton(VarUtils::userEvent->sneak.c_str(),
+        SelectButton(VarUtils::userEvent->sneak.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->sneak)]);
-        SelectButton(VarUtils::userEvent->run.c_str(),
+        SelectButton(VarUtils::userEvent->run.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->run)]);
-        SelectButton(VarUtils::userEvent->toggleRun.c_str(),
+        SelectButton(VarUtils::userEvent->toggleRun.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->toggleRun)]);
-        SelectButton(VarUtils::userEvent->autoMove.c_str(),
+        SelectButton(VarUtils::userEvent->autoMove.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->autoMove)]);
-        SelectButton(VarUtils::userEvent->favorites.c_str(),
+        SelectButton(VarUtils::userEvent->favorites.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->favorites)]);
-        SelectButton(VarUtils::userEvent->quicksave.c_str(),
+        SelectButton(VarUtils::userEvent->quicksave.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quicksave)]);
-        SelectButton(VarUtils::userEvent->quickload.c_str(),
+        SelectButton(VarUtils::userEvent->quickload.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickload)]);
-        SelectButton(VarUtils::userEvent->wait.c_str(),
+        SelectButton(VarUtils::userEvent->wait.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->wait)]);
-        SelectButton(VarUtils::userEvent->journal.c_str(),
+        SelectButton(VarUtils::userEvent->journal.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->journal)]);
-        SelectButton(VarUtils::userEvent->pause.c_str(),
+        SelectButton(VarUtils::userEvent->pause.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->pause)]);
-        SelectButton(VarUtils::userEvent->quickInventory.c_str(),
+        SelectButton(VarUtils::userEvent->quickInventory.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickInventory)]);
-        SelectButton(VarUtils::userEvent->quickMagic.c_str(),
+        SelectButton(VarUtils::userEvent->quickMagic.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickMagic)]);
-        SelectButton(VarUtils::userEvent->quickStats.c_str(),
+        SelectButton(VarUtils::userEvent->quickStats.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickStats)]);
-        SelectButton(VarUtils::userEvent->quickMap.c_str(),
+        SelectButton(VarUtils::userEvent->quickMap.data(),
                      Config::needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickMap)]);
         ImGui::TreePop();
     }
@@ -449,7 +583,7 @@ static std::string StancesImage_dir = "Data/SKSE/Plugins/KeyLogicExpansion/Stanc
 void ShowStances()
 {
     auto image = StancesImage[Stances::currentStance];
-    ImGui::Image(image.srv, ImVec2(image.width, image.height));
+    ImGui::Image((ImTextureID)image.srv, ImVec2(image.width, image.height));
 }
 void ShowStatus()
 {
@@ -480,6 +614,7 @@ class Win32Hook
         a_wndClass->lpfnWndProc = &WND_PROC;
         return FnRC(a_wndClass);
     }
+
     static LRESULT WND_PROC(const HWND h_wnd, const UINT u_msg, const WPARAM w_param, const LPARAM l_param)
     {
         switch (u_msg)
@@ -493,6 +628,7 @@ class Win32Hook
         }
         return FnWP(h_wnd, u_msg, w_param, l_param);
     }
+
     static void Hook()
     {
         auto &trampoline = SKSE::GetTrampoline();
@@ -534,7 +670,33 @@ class DX11Hook
         ImGui_ImplWin32_Init(sd.OutputWindow);
         ImGui_ImplDX11_Init(device, context);
         ImGui::StyleColorsDark();
+
+        CSimpleIniA ini;
+        ini.SetUnicode();
+        ini.LoadFile((fontPath + "Font.ini").data());
+        std::string font = ini.GetValue("Locale", "Font");
+        float fontSize = ini.GetDoubleValue("Locale", "FontSize");
+        std::string glyph = ini.GetValue("Locale", "Glyph");
+        const ImWchar *range;
+        if (glyph == "Chinese")
+            range = io.Fonts->GetGlyphRangesChineseFull();
+        else if (glyph == "Japanese")
+            range = io.Fonts->GetGlyphRangesJapanese();
+        else if (glyph == "Korean")
+            range = io.Fonts->GetGlyphRangesKorean();
+        else if (glyph == "Greek")
+            range = io.Fonts->GetGlyphRangesGreek();
+        else if (glyph == "Cyrillic")
+            range = io.Fonts->GetGlyphRangesCyrillic();
+        else if (glyph == "Thai")
+            range = io.Fonts->GetGlyphRangesThai();
+        else if (glyph == "Vietnamese")
+            range = io.Fonts->GetGlyphRangesVietnamese();
+        else
+            range = io.Fonts->GetGlyphRangesDefault();
+        io.Fonts->AddFontFromFileTTF((fontPath + font).data(), fontSize, nullptr, range);
     }
+
     static void Present(uint32_t a1)
     {
         FnPr(a1);
@@ -557,6 +719,7 @@ class DX11Hook
             ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
         }
     }
+
     static void Hook()
     {
         auto &trampoline = SKSE::GetTrampoline();
@@ -573,7 +736,9 @@ class DX11Hook
   private:
     static inline REL::Relocation<decltype(CreateD3D11)> FnCD11;
     static inline REL::Relocation<decltype(Present)> FnPr;
+    static std::string fontPath;
 };
+std::string DX11Hook::fontPath = "Data/SKSE/Plugins/KeyLogicExpansion/Fonts/";
 
 class InputHook
 {
@@ -607,13 +772,13 @@ class InputHook
 
 void init()
 {
-    buildKeyNameMap();
     Win32Hook::Hook();
     DX11Hook::Hook();
     InputHook::Hook();
 }
 void showGUI()
 {
+    locale = Locale(Config::locale);
     StancesImage.push_back(GetImage(StancesImage_dir + "Stances-Null.png"));
     StancesImage.push_back(GetImage(StancesImage_dir + "Stances-Low.png"));
     StancesImage.push_back(GetImage(StancesImage_dir + "Stances-Mid.png"));

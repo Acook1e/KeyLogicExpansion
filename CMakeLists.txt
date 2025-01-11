@@ -39,6 +39,9 @@ add_commonlibsse_plugin(${PROJECT_NAME}
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 
+find_package(nlohmann_json REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/lib/PCH.h)
 
 if(NOT DEFINED PLUGIN_OUTPUT)

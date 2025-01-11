@@ -7,6 +7,8 @@ const static std::string ini_path = "Data/SKSE/Plugins/KeyLogicExpansion.ini";
 
 // Language
 std::string locale;
+std::string font;
+float fontSize;
 
 // Features
 bool &enableCustomInput = std::ref(Custom::enableCustomInput);
@@ -64,6 +66,9 @@ char *str(std::string ss)
 
 void setVar()
 {
+    // Language
+    locale = ini.GetValue("Language", "Locale", "en_US");
+
     // Features
     enableCustomInput = ini.GetBoolValue("Features", NameToStr(enableCustomInput));
     enableStances = ini.GetBoolValue("Features", NameToStr(enableStances));
@@ -168,6 +173,9 @@ void setVar()
 
 void createInI()
 {
+    // Language
+    ini.SetValue("Language", "Locale", "en_US");
+
     // Features
     ini.SetBoolValue("Features", NameToStr(enableCustomInput), false);
     ini.SetBoolValue("Features", NameToStr(enableStances), false);
@@ -277,28 +285,28 @@ void createInI()
     }
 
     // Modifier Input
-    ini.SetLongValue("Modifier", VarUtils::userEvent->activate.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->readyWeapon.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->tweenMenu.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->togglePOV.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->shout.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->run.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->toggleRun.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->autoMove.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->favorites.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quicksave.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickload.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->wait.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->journal.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->pause.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickInventory.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickMagic.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickStats.c_str(), 0);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickMap.c_str(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->activate.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->readyWeapon.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->tweenMenu.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->togglePOV.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->shout.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->run.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->toggleRun.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->autoMove.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->favorites.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quicksave.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickload.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->wait.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->journal.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->pause.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickInventory.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickMagic.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickStats.data(), 0);
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickMap.data(), 0);
 
     // Custom Input
 
-    SI_Error rc = ini.SaveFile(ini_path.c_str());
+    SI_Error rc = ini.SaveFile(ini_path.data());
     if (rc < 0)
         return SKSE::stl::report_and_fail("Cannot load ini.");
 
@@ -315,7 +323,7 @@ void loadInI()
         logger::error("ini file not exist, will generate default.");
         return createInI();
     }
-    SI_Error rc = ini.LoadFile(ini_path.c_str());
+    SI_Error rc = ini.LoadFile(ini_path.data());
     if (rc < 0)
         return SKSE::stl::report_and_fail("Cannot load ini.");
 
@@ -325,9 +333,12 @@ void loadInI()
 void saveInI()
 {
     ini.SetUnicode();
-    SI_Error rc = ini.LoadFile(ini_path.c_str());
+    SI_Error rc = ini.LoadFile(ini_path.data());
     if (rc < 0)
         return SKSE::stl::report_and_fail("Cannot save ini.");
+
+    // Language
+    ini.SetValue("Language", "Locale", locale.data());
 
     // Features
     ini.SetBoolValue("Features", NameToStr(enableCustomInput), enableCustomInput);
@@ -408,44 +419,44 @@ void saveInI()
     }
 
     // Modifier Input
-    ini.SetLongValue("Modifier", VarUtils::userEvent->activate.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->activate.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->activate)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->readyWeapon.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->readyWeapon.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->readyWeapon)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->tweenMenu.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->tweenMenu.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->tweenMenu)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->togglePOV.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->togglePOV.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->togglePOV)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->shout.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->shout.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->shout)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->run.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->run.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->run)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->toggleRun.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->toggleRun.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->toggleRun)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->autoMove.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->autoMove.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->autoMove)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->favorites.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->favorites.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->favorites)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quicksave.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quicksave.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quicksave)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickload.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickload.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickload)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->wait.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->wait.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->wait)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->journal.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->journal.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->journal)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->pause.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->pause.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->pause)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickInventory.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickInventory.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickInventory)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickMagic.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickMagic.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickMagic)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickStats.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickStats.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickStats)]);
-    ini.SetLongValue("Modifier", VarUtils::userEvent->quickMap.c_str(),
+    ini.SetLongValue("Modifier", VarUtils::userEvent->quickMap.data(),
                      needModifier[KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->quickMap)]);
 
-    rc = ini.SaveFile(ini_path.c_str());
+    rc = ini.SaveFile(ini_path.data());
     if (rc < 0)
         return SKSE::stl::report_and_fail("Cannot save to ini.");
 
