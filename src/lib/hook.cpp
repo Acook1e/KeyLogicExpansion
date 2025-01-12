@@ -214,7 +214,7 @@ void ActionPreInput(std::function<void()> func)
                  queue.action == ActionList::PowerAttackDual))
             {
                 std::thread([]() {
-                    while (KeyUtils::GetKeyState(Config::powerAttack))
+                    while (KeyUtils::GetKeyState(Style::styleMap[Style::currentStyle].powerAttack))
                         std::this_thread::sleep_for(std::chrono::milliseconds(5));
                     SKSE::GetTaskInterface()->AddTask(
                         []() { VarUtils::player->NotifyAnimationGraph("BFCOAttackstart_1"); });
@@ -397,7 +397,7 @@ void PowerAttack(AttackType type)
             if (Compatibility::BFCO)
             {
                 std::thread([]() {
-                    while (KeyUtils::GetKeyState(Config::powerAttack))
+                    while (KeyUtils::GetKeyState(Style::styleMap[Style::currentStyle].powerAttack))
                         std::this_thread::sleep_for(std::chrono::milliseconds(5));
                     SKSE::GetTaskInterface()->AddTask(
                         []() { VarUtils::player->NotifyAnimationGraph("BFCOAttackstart_1"); });
@@ -411,11 +411,10 @@ void PowerAttack(AttackType type)
 void Block()
 {
     while (PlayerStatus::IsSheathe() && !PlayerStatus::IsDodging() && !PlayerStatus::IsBlocking() &&
-           KeyUtils::GetKeyState(Config::block))
+           KeyUtils::GetKeyState(Style::styleMap[Style::currentStyle].block))
     {
         SKSE::GetTaskInterface()->AddTask([]() {
-            if (VarUtils::player->GetActorRuntimeData().currentProcess->PlayIdle(VarUtils::player,
-                                                                                 ActionList::BlockStart.idle, nullptr))
+            if (VarUtils::player->NotifyAnimationGraph(ActionList::BlockStart.event))
             {
                 vanillaRMB = false;
                 VarUtils::player->AsActorState()->actorState2.wantBlocking = true;
@@ -440,7 +439,7 @@ void Recover()
             Style::styleMap[Style::currentStyle].isAltTypeEnable =
                 KeyUtils::GetKeyState(Style::styleMap[Style::currentStyle].attackTypeModifier);
         if ((PlayerStatus::IsBlocking() || PlayerStatus::IsBashing()) &&
-            ((!KeyUtils::GetKeyState(Config::block) && !vanillaRMB) ||
+            ((!KeyUtils::GetKeyState(Style::styleMap[Style::currentStyle].block) && !vanillaRMB) ||
              (vanillaRMB && !KeyUtils::GetKeyState(KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->leftAttack)))))
             SKSE::GetTaskInterface()->AddTask([]() {
                 if (VarUtils::player->NotifyAnimationGraph("blockStop"))
@@ -702,8 +701,11 @@ bool AttackBlockHandler::CanProcess(InputEvent *a_event)
                 !Style::styleMap[Style::currentStyle].isAltTypeEnable;
         if (!PlayerStatus::IsSheathe())
             return false;
-        if (code == Config::normalAttack || code == Config::powerAttack || code == Config::otherAttack ||
-            code == Config::block || code == KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->readyWeapon))
+        if (code == Style::styleMap[Style::currentStyle].normalAttack ||
+            code == Style::styleMap[Style::currentStyle].powerAttack ||
+            code == Style::styleMap[Style::currentStyle].otherAttack ||
+            code == Style::styleMap[Style::currentStyle].block ||
+            code == KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->readyWeapon))
             return true;
         if (code == KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->rightAttack) ||
             code == KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->leftAttack))
@@ -720,20 +722,21 @@ bool AttackBlockHandler::CP(InputEvent *a_event)
 bool AttackBlockHandler::ProcessButton(ButtonEvent *a_event, PlayerControlsData *a_data)
 {
     auto code = KeyUtils::GetEventKeyMap(a_event);
-    if (CanDo() && Config::normalAttack && Config::powerAttack && Config::block)
+    if (CanDo() && Style::styleMap[Style::currentStyle].normalAttack &&
+        Style::styleMap[Style::currentStyle].powerAttack && Style::styleMap[Style::currentStyle].block)
     {
         if (VarUtils::player->IsBlocking() || PlayerStatus::IsBashing())
         {
             if (CanBash())
             {
-                if (code == Config::normalAttack)
+                if (code == Style::styleMap[Style::currentStyle].normalAttack)
                 {
                     a_event->userEvent = VarUtils::userEvent->rightAttack;
                     (this->*FnPB)(a_event, a_data);
                     VarUtils::player->NotifyAnimationGraph("bashRelease");
                     return true;
                 }
-                else if (code == Config::powerAttack)
+                else if (code == Style::styleMap[Style::currentStyle].powerAttack)
                 {
                     a_event->userEvent = VarUtils::userEvent->rightAttack;
                     return (this->*FnPB)(a_event, a_data);
@@ -742,7 +745,7 @@ bool AttackBlockHandler::ProcessButton(ButtonEvent *a_event, PlayerControlsData 
             else
                 return true;
         }
-        if (code == Config::block && a_event->IsDown())
+        if (code == Style::styleMap[Style::currentStyle].block && a_event->IsDown())
             std::thread(Block).detach();
         // BFCO ComboAttack
         if (Compatibility::BFCO && code == Config::BFCO_ComboAttack && PlayerStatus::IsAttacking())
@@ -750,7 +753,7 @@ bool AttackBlockHandler::ProcessButton(ButtonEvent *a_event, PlayerControlsData 
             VarUtils::player->NotifyAnimationGraph("BFCOAttackStart_Comb");
             doAnimation(Compatibility::BFCO_ComboAttack);
         }
-        if (code == Config::normalAttack)
+        if (code == Style::styleMap[Style::currentStyle].normalAttack)
         {
             if (Style::styleMap[Style::currentStyle].isAltTypeEnable)
             {
@@ -832,7 +835,7 @@ bool AttackBlockHandler::ProcessButton(ButtonEvent *a_event, PlayerControlsData 
             }
             a_event->userEvent = "";
         }
-        else if (code == Config::powerAttack)
+        else if (code == Style::styleMap[Style::currentStyle].powerAttack)
         {
             if (Style::styleMap[Style::currentStyle].isAltTypeEnable)
             {
@@ -916,7 +919,7 @@ bool AttackBlockHandler::ProcessButton(ButtonEvent *a_event, PlayerControlsData 
             }
             a_event->userEvent = "";
         }
-        else if (code == Config::otherAttack)
+        else if (code == Style::styleMap[Style::currentStyle].otherAttack)
         {
             if (Style::styleMap[Style::currentStyle].isAltTypeEnable)
             {
@@ -958,9 +961,11 @@ bool AttackBlockHandler::ProcessButton(ButtonEvent *a_event, PlayerControlsData 
     }
     if (PlayerStatus::IsRiding() && Config::enableReverseHorseAttack)
     {
-        if (code == Config::normalAttack || code == KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->rightAttack))
+        if (code == Style::styleMap[Style::currentStyle].normalAttack ||
+            code == KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->rightAttack))
             a_event->userEvent = VarUtils::userEvent->leftAttack;
-        else if (code == Config::powerAttack || code == KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->leftAttack))
+        else if (code == Style::styleMap[Style::currentStyle].powerAttack ||
+                 code == KeyUtils::GetVanillaKeyMap(VarUtils::userEvent->leftAttack))
             a_event->userEvent = VarUtils::userEvent->rightAttack;
     }
     return (this->*FnPB)(a_event, a_data);
@@ -1104,11 +1109,14 @@ bool ReadyWeaponHandler::CanProcess(InputEvent *a_event)
             return (this->*FnCP)(a_event);
         if (!PlayerStatus::IsSheathe())
         {
-            if (code == Config::normalAttack && Style::styleMap[Style::currentStyle].sheatheNormalAttack)
+            if (code == Style::styleMap[Style::currentStyle].normalAttack &&
+                Style::styleMap[Style::currentStyle].sheatheNormalAttack)
                 return true;
-            else if (code == Config::powerAttack && Style::styleMap[Style::currentStyle].sheathePowerAttack)
+            else if (code == Style::styleMap[Style::currentStyle].powerAttack &&
+                     Style::styleMap[Style::currentStyle].sheathePowerAttack)
                 return true;
-            else if (code == Config::otherAttack && Style::styleMap[Style::currentStyle].sheatheOtherAttack)
+            else if (code == Style::styleMap[Style::currentStyle].otherAttack &&
+                     Style::styleMap[Style::currentStyle].sheatheOtherAttack)
                 return true;
         }
     }

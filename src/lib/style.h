@@ -44,7 +44,12 @@ enum Styles : std::uint8_t
 };
 typedef struct
 {
-    // PreInput
+    // Key-Input
+    uint32_t normalAttack;
+    uint32_t powerAttack;
+    uint32_t otherAttack;
+    uint32_t block;
+    // Pre-Input
     uint32_t preInputTime;
     uint32_t intervalTime;
     // Normal

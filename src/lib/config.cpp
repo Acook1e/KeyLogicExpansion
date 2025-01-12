@@ -26,11 +26,6 @@ uint32_t &ChangeToMid = std::ref(Stances::ChangeToMid);
 uint32_t &ChangeToHigh = std::ref(Stances::ChangeToHigh);
 
 // Vanilla Input
-uint32_t normalAttack;
-uint32_t powerAttack;
-uint32_t otherAttack;
-uint32_t block;
-
 uint32_t altTweenMenu;
 uint32_t altTogglePOV;
 
@@ -90,11 +85,6 @@ void setVar()
     ChangeToHigh = ini.GetLongValue("Stances", "ChangeToHigh");
 
     // Vanilla Input
-    normalAttack = ini.GetLongValue("Vanilla", NameToStr(normalAttack));
-    powerAttack = ini.GetLongValue("Vanilla", NameToStr(powerAttack));
-    otherAttack = ini.GetLongValue("Vanilla", NameToStr(otherAttack));
-    block = ini.GetLongValue("Vanilla", NameToStr(block));
-
     altTweenMenu = ini.GetLongValue("Vanilla", NameToStr(altTweenMenu));
     altTogglePOV = ini.GetLongValue("Vanilla", NameToStr(altTogglePOV));
 
@@ -116,7 +106,12 @@ void setVar()
         Style::styleMap.insert(std::make_pair(
             (Style::Styles)i,
             Style::CombatStyle{
-                // PreInput
+                // Key-Input
+                (uint32_t)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "NormalAttack"),
+                (uint32_t)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "PowerAttack"),
+                (uint32_t)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "OtherAttack"),
+                (uint32_t)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "Block"),
+                // Pre-Input
                 (uint32_t)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "PreInputTime"),
                 (uint32_t)ini.GetLongValue(Style::GetStyleName((Style::Styles)i), "IntervalTime"),
                 // Normal
@@ -197,11 +192,6 @@ void createInI()
     ini.SetLongValue("Stances", "ChangeToHigh", KeyUtils::Mouse::MouseWheelUp);
 
     // Vanilla Input
-    ini.SetLongValue("Vanilla", NameToStr(normalAttack), KeyUtils::Mouse::MouseButtonLeft);
-    ini.SetLongValue("Vanilla", NameToStr(powerAttack), KeyUtils::Mouse::MouseButtonRight);
-    ini.SetLongValue("Vanilla", NameToStr(otherAttack), 0);
-    ini.SetLongValue("Vanilla", NameToStr(block), KeyUtils::KeyBoard::Tab);
-
     ini.SetLongValue("Vanilla", NameToStr(altTweenMenu), KeyUtils::KeyBoard::G);
     ini.SetLongValue("Vanilla", NameToStr(altTogglePOV), 0);
 
@@ -220,7 +210,12 @@ void createInI()
     // Combat Style
     for (int i = Style::Styles::Unknown; i <= Style::Styles::StaffMagic; i++)
     {
-        // PreInput
+        // Key-Input
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "NormalAttack", KeyUtils::Mouse::MouseButtonLeft);
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "PowerAttack", KeyUtils::Mouse::MouseButtonRight);
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "OtherAttack", 0);
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "Block", KeyUtils::KeyBoard::Tab);
+        // Pre-Input
         ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "PreInputTime", 100);
         ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "IntervalTime", 30);
         // Normal
@@ -256,8 +251,7 @@ void createInI()
         case Style::Styles::MagicSword:
         case Style::Styles::MagicFist:
         case Style::Styles::StaffSword:
-        case Style::Styles::StaffFist:
-            ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "OtherAttackType", Style::AttackType::VanillaLMB);
+            ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "OtherAttackType", Style::AttackType::VanillaRMB);
             break;
         case Style::Styles::Unknown:
         case Style::Styles::Bow:
@@ -277,9 +271,10 @@ void createInI()
         case Style::Styles::SwordFist:
         case Style::Styles::SwordMagic:
         case Style::Styles::SwordStaff:
+        case Style::Styles::StaffFist:
             ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "NormalAttackType", Style::AttackType::LeftHand);
             ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "PowerAttackType", Style::AttackType::LeftHand);
-            ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "OtherAttackType", Style::AttackType::VanillaRMB);
+            ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "OtherAttackType", Style::AttackType::VanillaLMB);
             break;
         }
     }
@@ -356,11 +351,6 @@ void saveInI()
     ini.SetLongValue("Stances", "ChangeToHigh", ChangeToHigh);
 
     // Vanilla Input
-    ini.SetLongValue("Vanilla", NameToStr(normalAttack), normalAttack);
-    ini.SetLongValue("Vanilla", NameToStr(powerAttack), powerAttack);
-    ini.SetLongValue("Vanilla", NameToStr(otherAttack), otherAttack);
-    ini.SetLongValue("Vanilla", NameToStr(block), block);
-
     ini.SetLongValue("Vanilla", NameToStr(altTweenMenu), altTweenMenu);
     ini.SetLongValue("Vanilla", NameToStr(altTogglePOV), altTogglePOV);
 
@@ -379,7 +369,15 @@ void saveInI()
     // Combat Style
     for (int i = Style::Styles::Unknown; i <= Style::Styles::StaffMagic; i++)
     {
-        // PreInput
+        // Key-Input
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "NormalAttack",
+                         Style::styleMap[(Style::Styles)i].normalAttack);
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "PowerAttack",
+                         Style::styleMap[(Style::Styles)i].powerAttack);
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "OtherAttack",
+                         Style::styleMap[(Style::Styles)i].otherAttack);
+        ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "Block", Style::styleMap[(Style::Styles)i].block);
+        // Pre-Input
         ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "PreInputTime",
                          Style::styleMap[(Style::Styles)i].preInputTime);
         ini.SetLongValue(Style::GetStyleName((Style::Styles)i), "IntervalTime",

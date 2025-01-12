@@ -416,15 +416,6 @@ void KeyBindSettings()
 
     if (ImGui::TreeNode(locale.GetStr({"Nodes", "Vanilla"}).data()))
     {
-        SelectButton(locale.GetStr({"NormalAttack", "name"}).data(), Config::normalAttack,
-                     locale.GetStr({"NormalAttack", "description"}).data());
-        SelectButton(locale.GetStr({"PowerAttack", "name"}).data(), Config::powerAttack,
-                     locale.GetStr({"PowerAttack", "description"}).data());
-        SelectButton(locale.GetStr({"OtherAttack", "name"}).data(), Config::otherAttack,
-                     locale.GetStr({"OtherAttack", "description"}).data());
-        SelectButton(locale.GetStr({"Block", "name"}).data(), Config::block,
-                     locale.GetStr({"Block", "description"}).data());
-        ImGui::Spacing();
         SelectButton(locale.GetStr({"AltTweenMenu", "name"}).data(), Config::altTweenMenu,
                      locale.GetStr({"AltTweenMenu", "description"}).data());
         SelectButton(locale.GetStr({"AltTogglePOV", "name"}).data(), Config::altTogglePOV,
@@ -442,6 +433,15 @@ void KeyBindSettings()
         ImGui::Text((locale.GetStr({"CurrentStyle", "name"}) +
                      locale.GetStr({"Styles", Style::GetStyleName(Style::currentStyle)}))
                         .data());
+        SelectButton(locale.GetStr({"NormalAttack", "name"}).data(), Style::styleMap[Style::currentStyle].normalAttack,
+                     locale.GetStr({"NormalAttack", "description"}).data());
+        SelectButton(locale.GetStr({"PowerAttack", "name"}).data(), Style::styleMap[Style::currentStyle].powerAttack,
+                     locale.GetStr({"PowerAttack", "description"}).data());
+        SelectButton(locale.GetStr({"OtherAttack", "name"}).data(), Style::styleMap[Style::currentStyle].otherAttack,
+                     locale.GetStr({"OtherAttack", "description"}).data());
+        SelectButton(locale.GetStr({"Block", "name"}).data(), Style::styleMap[Style::currentStyle].block,
+                     locale.GetStr({"Block", "description"}).data());
+        ImGui::Spacing();
         SelectAttackType(locale.GetStr({"NormalAttackType", "name"}).data(),
                          Style::styleMap[Style::currentStyle].normalAttackType,
                          locale.GetStr({"NormalAttackType", "description"}).data());

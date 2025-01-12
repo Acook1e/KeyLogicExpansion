@@ -18,11 +18,6 @@ extern uint32_t enableSheatheAttack;
 extern bool enableReverseHorseAttack;
 
 // Vanilla Input
-extern uint32_t normalAttack;
-extern uint32_t powerAttack;
-extern uint32_t otherAttack;
-extern uint32_t block;
-
 extern uint32_t altTweenMenu;
 extern uint32_t altTogglePOV;
 

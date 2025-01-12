@@ -528,10 +528,10 @@ void init()
     PowerAttackDual.action = (RE::BGSAction *)RE::TESForm::LookupByID(0x2E2F7);
     PowerAttackDual.event = "";
 
-    BlockStart.type = ActionType::Idle;
-    BlockStart.idle = (RE::TESIdleForm *)RE::TESForm::LookupByID(0x13217);
+    BlockStart.type = ActionType::AniamtionEvent;
+    BlockStart.idle = nullptr;
     BlockStart.action = nullptr;
-    BlockStart.event = "";
+    BlockStart.event = "blockStart";
 
     NormalAttackSprint.type = ActionType::AniamtionEvent;
     NormalAttackSprint.idle = nullptr;
